@@ -1,59 +1,109 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# em3k Server
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+This repository is the Laravel server side of em3k. It currently contains a mostly stock Laravel 12 application with a Filament 3 admin panel; the `em3k-viewer` is the more developed part of the project. The server does not currently define custom em3k API routes or Filament resources, and it is not required to serve the viewer's local JSON content.
 
-## About Laravel
+The admin panel is available at `/admin`. Current migrations provide Laravel users, sessions, cache and queue tables, plus media-library and Sanctum tables. They create the database schema, not content from another computer.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Requirements
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- PHP 8.2 or newer, with the PDO MySQL extension enabled (`pdo_mysql`)
+- Composer
+- MariaDB running locally, with a database and a user that can create and alter tables
+- Node.js and npm if you want to run or build the Laravel Vite assets
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## First-Time Setup
 
-## Learning Laravel
+Run these commands from this directory (`em3k-server`).
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+1. Install the PHP dependencies and create your local environment file:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+   ```sh
+   composer install
+   cp .env.example .env
+   ```
 
-## Laravel Sponsors
+2. Create an empty MariaDB database. For example, run the following as a MariaDB administrator. Use a local-only password of your choice:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+   ```sql
+   CREATE DATABASE em3k CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   CREATE USER 'em3k'@'127.0.0.1' IDENTIFIED BY 'replace-with-a-local-password';
+   GRANT ALL PRIVILEGES ON em3k.* TO 'em3k'@'127.0.0.1';
+   ```
 
-### Premium Partners
+   You can instead create the database and grant a user access through phpMyAdmin. The account must match the host and credentials configured below.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+3. Edit `.env`. Set the app values and MariaDB connection, replacing the example password:
 
-## Contributing
+   ```dotenv
+   APP_NAME=em3k
+   APP_ENV=local
+   APP_DEBUG=true
+   APP_URL=http://127.0.0.1:8000
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+   DB_CONNECTION=mariadb
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=em3k
+   DB_USERNAME=em3k
+   DB_PASSWORD=replace-with-a-local-password
+   ```
 
-## Code of Conduct
+   Keep `.env` on this machine; it is ignored by Git and should not be committed.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+4. Generate the app key and create the tables:
 
-## Security Vulnerabilities
+   ```sh
+   php artisan key:generate
+   php artisan migrate
+   ```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+   Migrations are tracked in the database. Running `php artisan migrate` again later applies only pending migrations. Do not use `php artisan migrate:fresh` on a database you want to keep; it drops all tables.
 
-## License
+5. Create your own Filament login:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+   ```sh
+   php artisan make:filament-user
+   ```
+
+   Follow the prompts to set the name, email, and password. Do not run `php artisan db:seed` for routine setup: the current development seeder creates a test admin account with a predictable password.
+
+## Run Locally
+
+Start Laravel from this directory:
+
+```sh
+php artisan serve
+```
+
+Open [http://127.0.0.1:8000/admin](http://127.0.0.1:8000/admin) and sign in with the Filament user you created.
+
+For Vite asset development, install the npm dependencies and start Vite in a second terminal:
+
+```sh
+npm install
+npm run dev
+```
+
+To build those assets instead, run `npm run build`.
+
+## Useful Commands
+
+```sh
+php artisan about             # Show effective app and database configuration
+php artisan migrate:status    # Show which migrations have run
+php artisan test              # Run the Laravel test suite
+```
+
+If you change `.env` after configuration has been cached, refresh Laravel's configuration with:
+
+```sh
+php artisan config:clear
+```
+
+## Troubleshooting
+
+- **SQLite database file does not exist:** check that `.env` exists and has `DB_CONNECTION=mariadb`. The example environment defaults to SQLite, but this setup uses MariaDB.
+- **Could not find driver:** enable/install the PHP `pdo_mysql` extension for the PHP CLI used to run Artisan, then check with `php -m`.
+- **Database connection refused or access denied:** confirm MariaDB is running and that `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD` match the database and user you created.
+- **Application encryption key is missing:** run `php artisan key:generate` for a new local environment. Do not regenerate the key on an existing environment without understanding the effect on encrypted data and sessions.
+- **HTTP 500:** check `storage/logs/laravel.log` and run `php artisan migrate:status`. Keep `APP_DEBUG=true` only for local development.
