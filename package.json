@@ -1,4 +1,17 @@
 {
+    "name": "em3k-server",
+    "version": "1.0.0-beta",
+    "description": "The backend server for teachers in the Em3k system.",
+    "author": "Ken Dawson",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/edumatic3k/em3k-server.git"
+    },
+    "bugs": {
+        "url": "https://github.com/edumatic3k/em3k-server/issues"
+    },
+    "homepage": "https://teacher.em3k.org",
     "$schema": "https://www.schemastore.org/package.json",
     "private": true,
     "type": "module",
